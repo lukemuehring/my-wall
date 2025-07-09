@@ -1,11 +1,8 @@
 {
   "hosting": {
+    "site": "my-wall-514a",
     "public": "dashboard/out",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",
