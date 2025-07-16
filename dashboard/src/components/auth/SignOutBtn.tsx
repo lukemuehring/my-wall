@@ -15,7 +15,7 @@ export default function SignOutBtn() {
   };
 
   return (
-    <button onClick={handleSignOut} style={{ padding: "8px 16px" }}>
+    <button onClick={handleSignOut} className="p-4 bg-amber-50">
       Sign Out
     </button>
   );

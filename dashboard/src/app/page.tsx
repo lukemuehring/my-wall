@@ -20,8 +20,8 @@ export default function Home() {
 
   return (
     <>
-      <Dashboard user={user} />
       <UserProfile user={user} />
+      <Dashboard user={user} />
     </>
   );
 }

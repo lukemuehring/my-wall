@@ -2,35 +2,55 @@ import {defineType} from 'sanity'
 
 export const note = defineType({
   name: 'note',
-  type: 'document',
   title: 'Note',
+  type: 'document',
   fields: [
-    {name: 'title', type: 'string', title: 'Title'},
-    {name: 'content', type: 'text', title: 'Content'},
+    {
+      name: 'title',
+      title: 'Title',
+      type: 'string',
+    },
+    {
+      name: 'content',
+      title: 'Content',
+      type: 'text',
+    },
     {
       name: 'position',
       title: 'Position',
       type: 'object',
       fields: [
-        {name: 'x', type: 'number', title: 'X'},
-        {name: 'y', type: 'number', title: 'Y'},
-        {name: 'z', type: 'number', title: 'Z'},
+        {
+          name: 'x',
+          title: 'X',
+          type: 'number',
+        },
+        {
+          name: 'y',
+          title: 'Y',
+          type: 'number',
+        },
+        {
+          name: 'z',
+          title: 'Z',
+          type: 'number',
+        },
       ],
     },
     {
       name: 'authorId',
-      type: 'string',
       title: 'Author Firebase UID',
+      type: 'string',
     },
     {
       name: 'boardId',
-      type: 'string',
       title: 'Board ID',
+      type: 'string',
     },
     {
       name: 'createdAt',
-      type: 'datetime',
       title: 'Created At',
+      type: 'datetime',
       initialValue: () => new Date().toISOString(),
     },
   ],
