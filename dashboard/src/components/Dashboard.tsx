@@ -1,24 +1,10 @@
 "use client";
-import { sanityClient } from "@/lib/sanityClient";
-import { INote } from "@/types/Note";
+import { useLiveNotes } from "@/hooks/useLiveNotes";
 import { User } from "firebase/auth";
-import { useEffect, useState } from "react";
 import NoteCard from "./NoteCard";
 
 export default function Dashboard({ user }: { user: User | null }) {
-  const [notes, setNotes] = useState<INote[]>([]);
-
-  useEffect(() => {
-    // GROQ query to fetch all notes
-    const query = `*[_type == "note"]{
-      _id,
-      title,
-      content,
-      position
-    }`;
-
-    sanityClient.fetch(query).then(setNotes).catch(console.error);
-  }, []);
+  const notes = useLiveNotes();
 
   return (
     <div className="relative w-full h-full bg-pink-50">
