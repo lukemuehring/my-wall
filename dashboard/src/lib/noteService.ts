@@ -47,7 +47,20 @@ export async function updateNote(_id: string, updatedFields: Partial<INote>) {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to update note");
+    throw new Error("Failed to update note.");
+  }
+
+  return res.json();
+}
+
+// DELETE
+export async function deleteNote(_id: string) {
+  const res = await fetch(`/api/notes/${_id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to delete note.");
   }
 
   return res.json();

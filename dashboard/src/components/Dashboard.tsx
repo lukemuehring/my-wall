@@ -6,6 +6,7 @@ import { useState } from "react";
 import { INote } from "@/types/Note";
 import { createNote } from "@/lib/noteService";
 import { v4 as uuid } from "uuid";
+import { Button } from "@adobe/react-spectrum";
 
 export default function Dashboard({ user }: { user: User | null }) {
   const liveNotes = useLiveNotes();
@@ -50,12 +51,9 @@ export default function Dashboard({ user }: { user: User | null }) {
     <div className="relative w-full h-full bg-pink-50">
       <div className="flex align-center justify-center">
         <h2 className="text-6xl text-black">Dashboard</h2>
-        <button
-          className="px-4 py-2 text-white bg-pink-400 rounded hover:bg-pink-500 transition"
-          onClick={handleCreateNote}
-        >
-          + New Note
-        </button>
+        <Button variant="accent" onPress={handleCreateNote}>
+          Create Note
+        </Button>
       </div>
 
       <div className="mt-10 p-6">

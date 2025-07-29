@@ -1,17 +1,16 @@
 "use client";
-import { updateNote } from "@/lib/noteService";
+import { updateNote, deleteNote } from "@/lib/noteService";
 import { INote } from "@/types/Note";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import Delete from "@spectrum-icons/workflow/Delete";
+import { ActionButton } from "@adobe/react-spectrum";
 
 // Simple deep comparison fallback
 const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
 function NoteCard({ note }: { note: INote }) {
   const [updatedNote, setUpdatedNote] = useState(note);
-  const [debouncedNote, setDebouncedNote] = useState(note);
-
-  // Update a field in the note
   const setField = (field: keyof INote, value: any) => {
     setUpdatedNote((prev) => ({
       ...prev,
@@ -19,7 +18,8 @@ function NoteCard({ note }: { note: INote }) {
     }));
   };
 
-  // Debounce the updated note object
+  const [debouncedNote, setDebouncedNote] = useState(note);
+  // Debounce updates
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedNote(updatedNote);
@@ -27,12 +27,19 @@ function NoteCard({ note }: { note: INote }) {
     return () => clearTimeout(timeout);
   }, [updatedNote]);
 
-  // Update the note if it changed
+  // Update
   useEffect(() => {
     if (!isEqual(debouncedNote, note) && debouncedNote._id) {
       updateNote(debouncedNote._id, debouncedNote);
     }
   }, [debouncedNote]);
+
+  const [deleted, setDeleted] = useState(false);
+  useEffect(() => {
+    if (deleted && note._id) {
+      deleteNote(note._id);
+    }
+  }, [deleted]);
 
   return (
     <motion.div
@@ -46,8 +53,17 @@ function NoteCard({ note }: { note: INote }) {
         x: updatedNote.position?.x ?? 0,
         y: updatedNote.position?.y ?? 0,
       }}
-      className="w-48 bg-yellow-100 text-black cursor-move rounded p-4 shadow"
+      className="relative w-48 bg-yellow-100 text-black cursor-move rounded p-4 shadow"
     >
+      <div className="absolute top-2 right-2">
+        <ActionButton
+          aria-label="Delete Note"
+          isQuiet={true}
+          onPress={() => setDeleted(true)}
+        >
+          <Delete />
+        </ActionButton>
+      </div>
       <textarea
         className="text-xl font-semibold w-full bg-yellow-200 mb-2 resize-none focus:outline-none"
         value={updatedNote.title}
