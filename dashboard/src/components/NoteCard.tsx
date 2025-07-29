@@ -4,45 +4,59 @@ import { INote } from "@/types/Note";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-function NoteCard({ note }: { note: INote }) {
-  const [content, setContent] = useState(note.content);
-  const [debouncedContent, setDebouncedContent] = useState(note.content);
+// Simple deep comparison fallback
+const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
-  // Debounce
+function NoteCard({ note }: { note: INote }) {
+  const [updatedNote, setUpdatedNote] = useState(note);
+  const [debouncedNote, setDebouncedNote] = useState(note);
+
+  // Update a field in the note
+  const setField = (field: keyof INote, value: any) => {
+    setUpdatedNote((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Debounce the updated note object
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setDebouncedContent(content);
-    }, 500);
-
+      setDebouncedNote(updatedNote);
+    }, 1000);
     return () => clearTimeout(timeout);
-  }, [content]);
+  }, [updatedNote]);
 
-  // Update
+  // Update the note if it changed
   useEffect(() => {
-    if (debouncedContent !== note.content) {
-      if (note._id) {
-        updateNote(note._id, { content: debouncedContent });
-      }
+    if (!isEqual(debouncedNote, note) && debouncedNote._id) {
+      updateNote(debouncedNote._id, debouncedNote);
     }
-  }, [debouncedContent]);
+  }, [debouncedNote]);
 
   return (
     <motion.div
       key={note._id}
       drag
       dragMomentum={false}
+      onDragEnd={(_, info) => {
+        setField("position", { x: info.point.x, y: info.point.y });
+      }}
       style={{
-        x: note.position?.x ?? 0,
-        y: note.position?.y ?? 0,
+        x: updatedNote.position?.x ?? 0,
+        y: updatedNote.position?.y ?? 0,
       }}
       className="w-48 bg-yellow-100 text-black cursor-move rounded p-4 shadow"
     >
-      <h3 className="text-xl font-semibold">{note.title}</h3>
-
       <textarea
-        className="w-full h-40 p-2 border rounded"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
+        className="text-xl font-semibold w-full bg-yellow-200 mb-2 resize-none focus:outline-none"
+        value={updatedNote.title}
+        onChange={(e) => setField("title", e.target.value)}
+      />
+      <textarea
+        className="w-full h-40 p-2 bg-yellow-200 border rounded resize-none"
+        value={updatedNote.content}
+        onChange={(e) => setField("content", e.target.value)}
       />
     </motion.div>
   );

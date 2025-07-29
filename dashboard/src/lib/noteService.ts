@@ -10,6 +10,21 @@ const getNotesQuery = `*[_type == "note"]{
 type INotesCallback = (notes: INote[]) => void;
 
 // CREATE
+export async function createNote(note: Omit<INote, "_id">): Promise<INote> {
+  const res = await fetch("/api/notes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(note),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to create note");
+  }
+
+  return res.json();
+}
+
+// GET
 export function subscribeToNotes(onUpdate: INotesCallback) {
   // Initial fetch
   sanityClient.fetch<INote[]>(getNotesQuery).then(onUpdate);
@@ -25,8 +40,8 @@ export function subscribeToNotes(onUpdate: INotesCallback) {
 
 // UPDATE
 export async function updateNote(_id: string, updatedFields: Partial<INote>) {
-  const res = await fetch("/api/notes/update", {
-    method: "POST",
+  const res = await fetch("/api/notes", {
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ _id, updatedFields }),
   });
