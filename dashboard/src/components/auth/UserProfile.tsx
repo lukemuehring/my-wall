@@ -1,22 +1,14 @@
 "use client";
+import UserIcon from "@spectrum-icons/workflow/User";
 import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
 import { auth } from "../../../firebase";
-import SignOutBtn from "./SignOutBtn";
-import UserIcon from "@spectrum-icons/workflow/User";
-import { useState } from "react";
-import {
-  ActionButton,
-  Button,
-  Item,
-  Menu,
-  MenuTrigger,
-} from "@adobe/react-spectrum";
+import { signOut } from "firebase/auth";
+
+import { ActionButton, Item, Menu, MenuTrigger } from "@adobe/react-spectrum";
 
 const provider = new GoogleAuthProvider();
 
 export default function UserProfile({ user }: { user: User | null }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-
   const handleSignIn = () => {
     signInWithPopup(auth, provider)
       .then((result) => {
@@ -27,35 +19,43 @@ export default function UserProfile({ user }: { user: User | null }) {
       });
   };
 
+  const handleSignOut = () => {
+    signOut(auth)
+      .then(() => {
+        console.log("User signed out");
+      })
+      .catch((error) => {
+        console.error("Sign out error:", error);
+      });
+  };
+
   return (
     <div className="fixed top-4 right-4 z-100 w-[42px] h-[42px] flex items-center justify-center">
       <MenuTrigger>
         <ActionButton>
           <UserIcon />
         </ActionButton>
-        <Menu onAction={(key) => alert(key)}>
-          <Item key="cut">Cut</Item>
-          <Item key="copy">Copy</Item>
-          <Item key="paste">Paste</Item>
-          <Item key="replace">Replace</Item>
+        <Menu
+          onAction={(key) => {
+            switch (key) {
+              case "signout":
+                handleSignOut();
+                break;
+              case "signin":
+                handleSignIn();
+                break;
+              default:
+                break;
+            }
+          }}
+        >
+          {user ? (
+            <Item key="signout">Sign Out</Item>
+          ) : (
+            <Item key="signin">Sign in with Google</Item>
+          )}
         </Menu>
       </MenuTrigger>
-      {menuOpen && (
-        <div className="absolute top-0 right-0">
-          {user ? (
-            <div>
-              <p>Welcome, {user.displayName}</p>
-              <SignOutBtn />
-            </div>
-          ) : (
-            <div>
-              <button onClick={handleSignIn} style={{ padding: "8px 16px" }}>
-                Sign in with Google
-              </button>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
