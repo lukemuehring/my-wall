@@ -3,7 +3,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { auth } from "../../firebase";
 import UserProfile from "../components/auth/UserProfile";
-import Dashboard from "../components/Dashboard";
+import Dashboard from "../components/Dashboard/Dashboard";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -19,9 +19,9 @@ export default function Home() {
   }, []);
 
   return (
-    <>
+    <div className="w-full h-full">
       <UserProfile user={user} />
       <Dashboard user={user} />
-    </>
+    </div>
   );
 }

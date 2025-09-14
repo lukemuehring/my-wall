@@ -1,0 +1,15 @@
+.dashboard-canvas {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(0, 0, 0, 0.05) 1px,
+    transparent 0
+  );
+  background-size: 20px 20px;
+  background-color: #fff;
+}
+
+.journal-textarea textarea {
+  font-size: larger;
+  font-family: inherit;
+  border: 2px black solid;
+}

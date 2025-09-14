@@ -1,17 +1,19 @@
 "use client";
 import { useServerNotes } from "@/hooks/useServerNotes";
-import { User } from "firebase/auth";
-import NoteCard from "./NoteCard";
-import { useState, useEffect } from "react";
-import { INote } from "@/types/Note";
 import { createNote, deleteNote } from "@/lib/noteService";
+import { INote } from "@/types/Note";
+import { Button, TextArea } from "@adobe/react-spectrum";
+import { User } from "firebase/auth";
+import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
-import { Button } from "@adobe/react-spectrum";
+import NoteCard from "../NoteCard";
+import "./Dashboard.css";
 
 export default function Dashboard({ user }: { user: User | null }) {
   const serverNotes = useServerNotes();
   const [localNotes, setLocalNotes] = useState<INote[]>([]);
   const [deletedNoteIds, setDeletedNoteIds] = useState<Set<string>>(new Set());
+  const [inputRegistered, setInputRegistered] = useState<boolean>(false);
 
   const handleCreateNote = async () => {
     if (!user) return;
@@ -20,7 +22,7 @@ export default function Dashboard({ user }: { user: User | null }) {
 
     const newNote: INote = {
       _id: newId,
-      title: "Untitled",
+      title: "",
       content: "",
       position: { x: 100, y: 100, z: 1 },
       authorId: user.uid,
@@ -82,6 +84,14 @@ export default function Dashboard({ user }: { user: User | null }) {
     });
   }, [serverNotes]);
 
+  // Log when input is registered for the first time
+  useEffect(() => {
+    if (inputRegistered) {
+      console.log("Input registered for the first time!");
+      // handleCreateNgote;
+    }
+  }, [inputRegistered]);
+
   /**
    * The Flow:
    * Delete clicked → Note disappears immediately (optimistic)
@@ -106,15 +116,22 @@ export default function Dashboard({ user }: { user: User | null }) {
   ];
 
   return (
-    <div className="relative w-full h-full bg-pink-50">
+    <div className="relative w-full h-full min-h-screen flex flex-col items-center justify-center dashboard-canvas">
       <div className="flex align-center justify-center">
         <h2 className="text-6xl text-black">What's on your mind?</h2>
-        <Button variant="accent" onPress={handleCreateNote}>
-          Create Note
-        </Button>
       </div>
 
       <div className="mt-10 p-6">
+        <TextArea
+          onInput={() => setInputRegistered(true)}
+          aria-label="type what's on your mind"
+          width={650}
+          UNSAFE_className="journal-textarea"
+        />
+
+        {/* <Button variant="accent" onPress={handleCreateNote}>
+          Create Note
+        </Button> */}
         {allNotes.length === 0 && <p>No notes found.</p>}
         {allNotes.map((note) => (
           <NoteCard
