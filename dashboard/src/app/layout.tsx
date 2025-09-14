@@ -1,6 +1,12 @@
-import type { Metadata } from "next";
-import "./globals.css";
 import SpectrumProvider from "@/components/SpectrumProvider";
+import type { Metadata } from "next";
+import { Nunito } from "next/font/google";
+import "./globals.css";
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
 
 export const metadata: Metadata = {
   title: "My Wall",
@@ -14,8 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased font-helvetica">
-        <SpectrumProvider>{children}</SpectrumProvider>
+      <body className="antialiased">
+        <SpectrumProvider>
+          <div className={nunito.className}>{children}</div>
+        </SpectrumProvider>
       </body>
     </html>
   );

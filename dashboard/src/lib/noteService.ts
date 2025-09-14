@@ -32,7 +32,11 @@ export function subscribeToNotes(onUpdate: INotesCallback) {
   // Subscribe to real-time updates
   const subscription = sanityClient.listen(getNotesQuery).subscribe(() => {
     // Re-fetch when content changes
-    sanityClient.fetch<INote[]>(getNotesQuery).then(onUpdate);
+    console.log("updating in the subscription to notes");
+    sanityClient.fetch<INote[]>(getNotesQuery).then((notes) => {
+      console.log("Fetch result after change:", notes);
+      onUpdate(notes);
+    });
   });
 
   return () => subscription.unsubscribe();
@@ -55,6 +59,8 @@ export async function updateNote(_id: string, updatedFields: Partial<INote>) {
 
 // DELETE
 export async function deleteNote(_id: string) {
+  console.log("deleting note");
+
   const res = await fetch(`/api/notes/${_id}`, {
     method: "DELETE",
   });

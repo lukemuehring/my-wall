@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { INote } from "@/types/Note";
 import { subscribeToNotes } from "@/lib/noteService";
 
-export function useLiveNotes(): INote[] {
+export function useServerNotes(): INote[] {
   const [notes, setNotes] = useState<INote[]>([]);
 
   useEffect(() => {

@@ -1,45 +1,40 @@
 "use client";
-import { updateNote, deleteNote } from "@/lib/noteService";
+import { updateNote } from "@/lib/noteService";
 import { INote } from "@/types/Note";
+import { ActionButton } from "@adobe/react-spectrum";
+import Delete from "@spectrum-icons/workflow/Delete";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import Delete from "@spectrum-icons/workflow/Delete";
-import { ActionButton } from "@adobe/react-spectrum";
 
 // Simple deep comparison fallback
 const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
-function NoteCard({ note }: { note: INote }) {
+function NoteCard({ note, onDelete }: { note: INote; onDelete: () => void }) {
   const [updatedNote, setUpdatedNote] = useState(note);
+  const [debouncedNote, setDebouncedNote] = useState(note);
+
+  // Updates to fields -> set updatedNote
   const setField = (field: keyof INote, value: any) => {
     setUpdatedNote((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
-
-  const [debouncedNote, setDebouncedNote] = useState(note);
-  // Debounce updates
+  // Debounce updatedNote changes
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedNote(updatedNote);
     }, 1000);
     return () => clearTimeout(timeout);
   }, [updatedNote]);
-
-  // Update
+  // When debounced note is updated, make the server request.
   useEffect(() => {
     if (!isEqual(debouncedNote, note) && debouncedNote._id) {
+      console.log("updating from NoteCard", debouncedNote, note);
+
       updateNote(debouncedNote._id, debouncedNote);
     }
   }, [debouncedNote]);
-
-  const [deleted, setDeleted] = useState(false);
-  useEffect(() => {
-    if (deleted && note._id) {
-      deleteNote(note._id);
-    }
-  }, [deleted]);
 
   return (
     <motion.div
@@ -59,7 +54,7 @@ function NoteCard({ note }: { note: INote }) {
         <ActionButton
           aria-label="Delete Note"
           isQuiet={true}
-          onPress={() => setDeleted(true)}
+          onPress={onDelete}
         >
           <Delete />
         </ActionButton>
