@@ -1,12 +1,14 @@
 import SpectrumProvider from "@/components/SpectrumProvider";
+import { UserProvider } from "@/contexts/UserContext";
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
-import "./globals.css";
+import localFont from "next/font/local";
 
-const nunito = Nunito({
-  subsets: ["latin"],
-  weight: ["400", "700"],
+const excalidraw = localFont({
+  src: "../fonts/Excalifont-Regular.woff2",
+  display: "swap",
+  variable: "--font-excalifont",
 });
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "My Wall",
@@ -21,9 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <SpectrumProvider>
-          <div className={nunito.className}>{children}</div>
-        </SpectrumProvider>
+        <UserProvider>
+          <SpectrumProvider>
+            <div className={excalidraw.className}>{children}</div>
+          </SpectrumProvider>
+        </UserProvider>
       </body>
     </html>
   );

@@ -12,3 +12,6 @@ npm run start for production environment (no hot reloading, minified code, behav
 implement boards
 
 When you deploy your Next.js app, you’ll also need to add your production domain (e.g. https://myapp.vercel.app) to sanity CORS origins.
+
+small bugs:
+opening the menu causes a slight layout shift

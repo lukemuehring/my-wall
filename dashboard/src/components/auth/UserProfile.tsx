@@ -1,14 +1,16 @@
 "use client";
 import UserIcon from "@spectrum-icons/workflow/User";
-import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../../firebase";
 import { signOut } from "firebase/auth";
+import { useUser } from "@/contexts/UserContext";
 
 import { ActionButton, Item, Menu, MenuTrigger } from "@adobe/react-spectrum";
 
 const provider = new GoogleAuthProvider();
 
-export default function UserProfile({ user }: { user: User | null }) {
+export default function UserProfile() {
+  const { user } = useUser();
   const handleSignIn = () => {
     signInWithPopup(auth, provider)
       .then((result) => {

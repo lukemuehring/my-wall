@@ -4,30 +4,51 @@ import { INote } from "@/types/Note";
 import { ActionButton } from "@adobe/react-spectrum";
 import Delete from "@spectrum-icons/workflow/Delete";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
+import { TextArea } from "@adobe/react-spectrum";
 
 // Simple deep comparison fallback
 const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
-function NoteCard({ note, onDelete }: { note: INote; onDelete: () => void }) {
+function NoteCard({
+  note,
+  onCreate,
+  onDelete,
+}: {
+  note: INote;
+  onCreate: () => Promise<void>;
+  onDelete: () => Promise<void>;
+}) {
+  const [inputRegistered, setInputRegistered] = useState<boolean>(false);
   const [updatedNote, setUpdatedNote] = useState(note);
   const [debouncedNote, setDebouncedNote] = useState(note);
 
+  // Create note if input for the first time and no author id.
+  useEffect(() => {
+    if (inputRegistered && !note.authorId) {
+      onCreate();
+    }
+  }, [inputRegistered]);
+
   // Updates to fields -> set updatedNote
   const setField = (field: keyof INote, value: any) => {
+    if (!inputRegistered) {
+      setInputRegistered(true);
+    }
+
     setUpdatedNote((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
-  // Debounce updatedNote changes
+  // updatedNote debouncer effect
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedNote(updatedNote);
     }, 1000);
     return () => clearTimeout(timeout);
   }, [updatedNote]);
-  // When debounced note is updated, make the server request.
+  // debounced note API call effect
   useEffect(() => {
     if (!isEqual(debouncedNote, note) && debouncedNote._id) {
       console.log("updating from NoteCard", debouncedNote, note);
@@ -48,7 +69,7 @@ function NoteCard({ note, onDelete }: { note: INote; onDelete: () => void }) {
         x: updatedNote.position?.x ?? 0,
         y: updatedNote.position?.y ?? 0,
       }}
-      className="relative w-48 bg-yellow-100 text-black cursor-move rounded p-4 shadow"
+      className="relative flex flex-col text-black cursor-move rounded p-8 shadow"
     >
       <div className="absolute top-2 right-2">
         <ActionButton
@@ -59,18 +80,28 @@ function NoteCard({ note, onDelete }: { note: INote; onDelete: () => void }) {
           <Delete />
         </ActionButton>
       </div>
-      <textarea
-        className="text-xl font-semibold w-full bg-yellow-200 mb-2 resize-none focus:outline-none"
+      {note._id}
+      {/* TITLE */}
+      {/* <TextArea´
+        // className="text-xl font-semibold w-full bg-yellow-200 mb-2 resize-none focus:outline-none"
         value={updatedNote.title}
-        onChange={(e) => setField("title", e.target.value)}
-      />
-      <textarea
-        className="w-full h-40 p-2 bg-yellow-200 border rounded resize-none"
+        aria-label="enter the title of your note"
+        onChange={(value) => setField("title", value)}
+      /> */}
+      {/* CONTENT TEXTAREA */}
+      <TextArea
+        autoFocus
         value={updatedNote.content}
-        onChange={(e) => setField("content", e.target.value)}
+        onChange={(value) => setField("content", value)}
+        aria-label="enter what's on your mind"
+        width={650}
+        UNSAFE_className="journal-textarea"
       />
     </motion.div>
   );
 }
 
-export default NoteCard;
+export default memo(NoteCard, (prevProps: any, nextProps: any) => {
+  // Re-render only if the note actually changes
+  return isEqual(prevProps.note, nextProps.note);
+});

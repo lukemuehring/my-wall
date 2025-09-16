@@ -1,5 +1,7 @@
 import { sanityClient } from "@/lib/sanityClient";
 import { INote } from "@/types/Note";
+import { auth } from "../../firebase";
+import { v4 as uuid } from "uuid";
 
 const getNotesQuery = `*[_type == "note"]{
       _id,
@@ -10,7 +12,7 @@ const getNotesQuery = `*[_type == "note"]{
 type INotesCallback = (notes: INote[]) => void;
 
 // CREATE
-export async function createNote(note: Omit<INote, "_id">): Promise<INote> {
+export async function createNote(note: INote): Promise<INote> {
   const res = await fetch("/api/notes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -21,7 +23,26 @@ export async function createNote(note: Omit<INote, "_id">): Promise<INote> {
     throw new Error("Failed to create note");
   }
 
-  return res.json();
+  const createdNote: INote = await res.json();
+  return createdNote;
+}
+
+// CREATE WITH USER (automatically gets current user)
+export async function createNoteWithUser(
+  noteData: Omit<INote, "authorId">
+): Promise<INote> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("User must be authenticated to create a note");
+  }
+
+  const noteWithUser: INote = {
+    ...noteData,
+    authorId: user.uid,
+    createdAt: new Date().toISOString(), // Use ISO string for consistency
+  };
+
+  return createNote(noteWithUser);
 }
 
 // GET

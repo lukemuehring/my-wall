@@ -1,0 +1,5 @@
+.journal-textarea textarea {
+  font-size: larger;
+  font-family: inherit;
+  border: 2px black solid;
+}

@@ -1,53 +1,66 @@
 "use client";
 import { useServerNotes } from "@/hooks/useServerNotes";
-import { createNote, deleteNote } from "@/lib/noteService";
+import { BASE_NOTE } from "@/lib/constants";
+import { createNoteWithUser, deleteNote } from "@/lib/noteService";
 import { INote } from "@/types/Note";
-import { Button, TextArea } from "@adobe/react-spectrum";
-import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { v4 as uuid } from "uuid";
-import NoteCard from "../NoteCard";
+import NoteCard from "../NoteCard/NoteCard";
 import "./Dashboard.css";
 
-export default function Dashboard({ user }: { user: User | null }) {
+export default function Dashboard() {
   const serverNotes = useServerNotes();
   const [localNotes, setLocalNotes] = useState<INote[]>([]);
   const [deletedNoteIds, setDeletedNoteIds] = useState<Set<string>>(new Set());
-  const [inputRegistered, setInputRegistered] = useState<boolean>(false);
 
-  const handleCreateNote = async () => {
-    if (!user) return;
+  // Set initial state directly to BASE_NOTE with initial position
+  const [baseNote, setBaseNote] = useState<ReturnType<typeof BASE_NOTE> | null>(
+    null
+  );
 
-    const newId = uuid();
+  // Initialize base note on client side only to avoid hydration mismatch
+  useEffect(() => {
+    if (!baseNote) {
+      setBaseNote(BASE_NOTE({ x: 100, y: 100, z: 1 }));
+    }
+  }, [baseNote]);
 
-    const newNote: INote = {
-      _id: newId,
-      title: "",
-      content: "",
-      position: { x: 100, y: 100, z: 1 },
-      authorId: user.uid,
-      boardId: "1", // TODO BOARDS
-      createdAt: Date.now().toString(),
-    };
-
-    // 1. Show it immediately
-    setLocalNotes((prev) => [...prev, newNote]);
-
-    // 2. Save to server (background)
+  // Creates the note, and replaces the base note in place with authorId
+  const handleCreateNote = async (newNote: INote) => {
+    // Save to server
     try {
-      await createNote(newNote);
+      // optimistic add to local notes
+      setLocalNotes((prev) => [...prev, newNote]);
+
+      // Persist
+      const createdNote: INote = await createNoteWithUser(newNote);
+
+      // Remove the old note and add the new one with server-generated ID
+      setLocalNotes((prev) => {
+        // Remove the original note (with old ID)
+        const filtered = prev.filter((n) => n._id !== newNote._id);
+        // Add the new note with server-generated ID
+        return [...filtered, createdNote];
+      });
     } catch (err) {
       console.error("Failed to save new note:", err);
-      // Revert local create
-      setLocalNotes((prev) => prev.filter((note) => note._id !== newNote._id));
+
+      // Remove the optimistic note on failure
+      setLocalNotes((prev) => prev.filter((n) => n._id !== newNote._id));
+
+      // Retry once after one second delay
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const retryNote = await createNoteWithUser(newNote);
+        setLocalNotes((prev) => [...prev, retryNote]);
+      } catch (retryErr) {
+        console.error("Retry failed to save new note:", retryErr);
+        alert("Failed to save new note. Please try again later.");
+      }
     }
   };
 
   // Delete
-  const handleDeleteNote = async (noteId: string | undefined) => {
-    if (!noteId) {
-      return;
-    }
+  const handleDeleteNote = async (noteId: string) => {
     const noteToDelete = localNotes.find((note) => note._id === noteId);
 
     // Remove immediately from localNotes and mark as deleted
@@ -84,13 +97,23 @@ export default function Dashboard({ user }: { user: User | null }) {
     });
   }, [serverNotes]);
 
-  // Log when input is registered for the first time
+  // Clean up localNotes when serverNotes are updated (for updates)
   useEffect(() => {
-    if (inputRegistered) {
-      console.log("Input registered for the first time!");
-      // handleCreateNgote;
-    }
-  }, [inputRegistered]);
+    setLocalNotes((prev) => {
+      // Remove any local notes that now exist in serverNotes
+      // But only if they have the same content (indicating the update was successful)
+      return prev.filter((local) => {
+        const serverNote = serverNotes.find(
+          (server) => server._id === local._id
+        );
+        if (!serverNote) return true; // Keep if not found in server
+
+        // Remove if server has the same or newer content
+        // This prevents duplicates while preserving optimistic updates
+        return false;
+      });
+    });
+  }, [serverNotes]);
 
   /**
    * The Flow:
@@ -108,35 +131,44 @@ export default function Dashboard({ user }: { user: User | null }) {
    */
 
   // Filter out duplicates and deleted notes
+  // Priority: serverNotes > localNotes (server is source of truth)
   const allNotes = [
-    ...localNotes.filter(
-      (local) => !serverNotes.some((live) => live._id === local._id)
-    ),
     ...serverNotes.filter((note) => note._id && !deletedNoteIds.has(note._id)),
+    ...localNotes.filter(
+      (local) =>
+        local._id &&
+        !serverNotes.some((server) => server._id === local._id) &&
+        !deletedNoteIds.has(local._id)
+    ),
+    ...(baseNote ? [baseNote] : []),
   ];
 
+  console.log("localNotes", localNotes);
+  console.log("serverNotes", serverNotes);
+  console.log("allNotes", allNotes);
+
+  const baseNoteCreated: boolean = !!baseNote?.authorId;
+
   return (
-    <div className="relative w-full h-full min-h-screen flex flex-col items-center justify-center dashboard-canvas">
-      <div className="flex align-center justify-center">
+    <div className="dashboard-canvas">
+      {/* Centered header */}
+      <div className="flex justify-center py-8">
         <h2 className="text-6xl text-black">What's on your mind?</h2>
       </div>
 
-      <div className="mt-10 p-6">
-        <TextArea
-          onInput={() => setInputRegistered(true)}
-          aria-label="type what's on your mind"
-          width={650}
-          UNSAFE_className="journal-textarea"
-        />
-
-        {/* <Button variant="accent" onPress={handleCreateNote}>
-          Create Note
-        </Button> */}
-        {allNotes.length === 0 && <p>No notes found.</p>}
+      {/* Note container that starts in normal flow but can expand infinitely */}
+      <div className="note-container">
+        {/* all notes */}
+        {allNotes.length === 0 && (
+          <div className="flex justify-center py-8">
+            <p className="text-xl text-gray-500">No notes found.</p>
+          </div>
+        )}
         {allNotes.map((note) => (
           <NoteCard
             note={note}
             key={note._id}
+            onCreate={() => handleCreateNote(note)}
             onDelete={() => handleDeleteNote(note._id)}
           ></NoteCard>
         ))}
