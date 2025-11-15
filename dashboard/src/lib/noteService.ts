@@ -4,10 +4,13 @@ import { auth } from "../../firebase";
 import { v4 as uuid } from "uuid";
 
 const getNotesQuery = `*[_type == "note"]{
-      _id,
+      _id,  
       title,
       content,
-      position
+      position,
+      authorId,
+      boardId,
+      createdAt
     }`;
 type INotesCallback = (notes: INote[]) => void;
 
@@ -53,9 +56,9 @@ export function subscribeToNotes(onUpdate: INotesCallback) {
   // Subscribe to real-time updates
   const subscription = sanityClient.listen(getNotesQuery).subscribe(() => {
     // Re-fetch when content changes
-    console.log("updating in the subscription to notes");
+    console.log("noteService subscription noticed a change");
     sanityClient.fetch<INote[]>(getNotesQuery).then((notes) => {
-      console.log("Fetch result after change:", notes);
+      console.log("noteService just fetched notes:", notes);
       onUpdate(notes);
     });
   });
@@ -64,11 +67,11 @@ export function subscribeToNotes(onUpdate: INotesCallback) {
 }
 
 // UPDATE
-export async function updateNote(_id: string, updatedFields: Partial<INote>) {
-  const res = await fetch("/api/notes", {
+export async function updateNote(updatedNote: INote) {
+  const res = await fetch(`/api/notes/${updatedNote._id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ _id, updatedFields }),
+    body: JSON.stringify({ updatedNote }),
   });
 
   if (!res.ok) {

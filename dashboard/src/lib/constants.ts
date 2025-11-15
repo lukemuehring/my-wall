@@ -1,20 +1,21 @@
 import { INote } from "@/types/Note";
 import { IPosition } from "@/types/Position";
-import { v4 as uuid } from "uuid";
+
+const BASE_NOTE_ID: string = 'base_note';
 
 // A base note with no author Id
 export const BASE_NOTE: (position: IPosition) => INote = (
   position: IPosition
 ) => {
-  const newId = uuid();
-
   return {
-    _id: newId,
+    _id: BASE_NOTE_ID,
     authorId: null,
-    title: "",
+    title: "BASE NOTE",
     content: "",
     position: position,
-    boardId: "1", // TODO BOARDS
-    createdAt: "", // Empty string - will be set when note is actually created
-  };
+    boardId: "1",
+    createdAt: "", 
+  } as INote;
 };
+
+export const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);

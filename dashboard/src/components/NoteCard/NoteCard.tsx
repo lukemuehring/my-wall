@@ -1,39 +1,38 @@
 "use client";
-import { updateNote } from "@/lib/noteService";
+import { isEqual } from "@/lib/constants";
 import { INote } from "@/types/Note";
-import { ActionButton } from "@adobe/react-spectrum";
+import { ActionButton, TextArea } from "@adobe/react-spectrum";
 import Delete from "@spectrum-icons/workflow/Delete";
 import { motion } from "framer-motion";
 import { memo, useEffect, useState } from "react";
-import { TextArea } from "@adobe/react-spectrum";
-
-// Simple deep comparison fallback
-const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
 function NoteCard({
   note,
   onCreate,
+  onUpdate,
   onDelete,
 }: {
   note: INote;
-  onCreate: () => Promise<void>;
+  onCreate: (noteToCreate: INote) => Promise<void>;
+  onUpdate: (noteToUpdate: INote) => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
-  const [inputRegistered, setInputRegistered] = useState<boolean>(false);
+  const [noteTouched, setNoteTouched] = useState<boolean>(false);
   const [updatedNote, setUpdatedNote] = useState(note);
-  const [debouncedNote, setDebouncedNote] = useState(note);
+  const [debouncedUpdatedNote, setDebouncedUpdatedNote] = useState(note);
 
-  // Create note if input for the first time and no author id.
+  // Call Create note callback, if touched for first time and no author id.
   useEffect(() => {
-    if (inputRegistered && !note.authorId) {
-      onCreate();
+    if (!note.authorId && noteTouched) {
+      onCreate(note);
+      console.log("create for note", note, noteTouched);
     }
-  }, [inputRegistered]);
+  }, [noteTouched]);
 
   // Updates to fields -> set updatedNote
   const setField = (field: keyof INote, value: any) => {
-    if (!inputRegistered) {
-      setInputRegistered(true);
+    if (!noteTouched) {
+      setNoteTouched(true);
     }
 
     setUpdatedNote((prev) => ({
@@ -41,21 +40,24 @@ function NoteCard({
       [field]: value,
     }));
   };
-  // updatedNote debouncer effect
+
+  // Debounce set updatedNote calls
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setDebouncedNote(updatedNote);
+      setDebouncedUpdatedNote(updatedNote);
     }, 1000);
     return () => clearTimeout(timeout);
   }, [updatedNote]);
-  // debounced note API call effect
-  useEffect(() => {
-    if (!isEqual(debouncedNote, note) && debouncedNote._id) {
-      console.log("updating from NoteCard", debouncedNote, note);
 
-      updateNote(debouncedNote._id, debouncedNote);
+  // Call Update note callback
+  useEffect(() => {
+    if (!isEqual(debouncedUpdatedNote, note)) {
+      console.log(
+        "NoteCard: debounced update note and note are not equal, we call onupdate."
+      );
+      onUpdate(debouncedUpdatedNote);
     }
-  }, [debouncedNote]);
+  }, [debouncedUpdatedNote]);
 
   return (
     <motion.div
@@ -69,7 +71,7 @@ function NoteCard({
         x: updatedNote.position?.x ?? 0,
         y: updatedNote.position?.y ?? 0,
       }}
-      className="relative flex flex-col text-black cursor-move rounded p-8 shadow"
+      className="relative flex flex-col w-fit text-black cursor-move rounded p-8 shadow"
     >
       <div className="absolute top-2 right-2">
         <ActionButton
@@ -82,6 +84,7 @@ function NoteCard({
       </div>
       {note._id}
       {/* TITLE */}
+      <div className="text-2xl font-semibold">{updatedNote.title}</div>
       {/* <TextArea´
         // className="text-xl font-semibold w-full bg-yellow-200 mb-2 resize-none focus:outline-none"
         value={updatedNote.title}
