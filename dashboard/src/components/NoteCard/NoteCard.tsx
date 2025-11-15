@@ -21,7 +21,7 @@ function NoteCard({
   const [updatedNote, setUpdatedNote] = useState(note);
   const [debouncedUpdatedNote, setDebouncedUpdatedNote] = useState(note);
 
-  // Call Create note callback, if touched for first time and no author id.
+  // CREATE
   useEffect(() => {
     if (!note.authorId && noteTouched) {
       onCreate(note);
@@ -29,26 +29,26 @@ function NoteCard({
     }
   }, [noteTouched]);
 
-  // Updates to fields -> set updatedNote
+  // #region UPDATE
   const setField = (field: keyof INote, value: any) => {
     if (!noteTouched) {
       setNoteTouched(true);
     }
 
-    setUpdatedNote((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    if (note.authorId) {
+      setUpdatedNote((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
   };
-
-  // Debounce set updatedNote calls
+  // debounce updates
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedUpdatedNote(updatedNote);
     }, 1000);
     return () => clearTimeout(timeout);
   }, [updatedNote]);
-
   // Call Update note callback
   useEffect(() => {
     if (!isEqual(debouncedUpdatedNote, note)) {
@@ -58,6 +58,7 @@ function NoteCard({
       onUpdate(debouncedUpdatedNote);
     }
   }, [debouncedUpdatedNote]);
+  // #endregion UPDATE
 
   return (
     <motion.div
