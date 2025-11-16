@@ -52,9 +52,7 @@ function NoteCard({
   // Call Update note callback
   useEffect(() => {
     if (!isEqual(debouncedUpdatedNote, note)) {
-      console.log(
-        "NoteCard: debounced update note and note are not equal, we call onupdate."
-      );
+      console.log("NoteCard UPDATE", debouncedUpdatedNote);
       onUpdate(debouncedUpdatedNote);
     }
   }, [debouncedUpdatedNote]);
@@ -64,13 +62,20 @@ function NoteCard({
     <motion.div
       key={note._id}
       drag
+      whileDrag={{
+        scale: 1.01,
+        boxShadow: "0px 10px 20px rgba(0,0,0,0.2)",
+      }}
       dragMomentum={false}
       onDragEnd={(_, info) => {
-        setField("position", { x: info.point.x, y: info.point.y });
+        setField("position", {
+          x: note.position.x + info.offset.x,
+          y: note.position.y + info.offset.y,
+        });
       }}
       style={{
-        x: updatedNote.position?.x ?? 0,
-        y: updatedNote.position?.y ?? 0,
+        x: updatedNote.position.x,
+        y: updatedNote.position.y,
       }}
       className="relative flex flex-col w-fit text-black cursor-move rounded p-8 shadow"
     >
@@ -84,6 +89,13 @@ function NoteCard({
         </ActionButton>
       </div>
       {note._id}
+      <div className="mt-4">
+        <div>Updated Note position:</div>({updatedNote.position.x},{" "}
+        {updatedNote.position.y})
+      </div>
+      <div className="mt-4">
+        <div> Note position:</div>({note.position.x}, {note.position.y})
+      </div>
       {/* TITLE */}
       <div className="text-2xl font-semibold">{updatedNote.title}</div>
       {/* <TextArea´

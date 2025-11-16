@@ -23,5 +23,5 @@
   min-height: 100vh;
   width: max-content;
   height: max-content;
-  padding-top: 120px; /* Space for fixed header */
+  border: 1px solid #ffb0f8
 }

@@ -29,3 +29,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 }
+
+const getNotesQuery = `*[_type == "note"]{
+      _id,  
+      title,
+      content,
+      position,
+      authorId,
+      boardId,
+      createdAt
+    }`;
+
+// READ
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  try {
+    const notes = await sanityClient.fetch<INote[]>(getNotesQuery);
+    console.log("next API found notes", notes)
+    return NextResponse.json<INote[]>(notes, { status: 201 });
+  } catch (error) {
+    console.error("Failed to get notes:", error);
+    return NextResponse.json(
+      { error: "Failed to get notes." },
+      { status: 500 }
+    );
+  }
+}

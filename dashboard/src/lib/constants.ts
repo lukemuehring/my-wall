@@ -1,7 +1,7 @@
 import { INote } from "@/types/Note";
 import { IPosition } from "@/types/Position";
 
-const BASE_NOTE_ID: string = 'base_note';
+export const BASE_NOTE_ID: string = 'base_note';
 
 // A base note with no author Id
 export const BASE_NOTE: (position: IPosition) => INote = (

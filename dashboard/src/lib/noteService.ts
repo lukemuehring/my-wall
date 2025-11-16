@@ -1,17 +1,7 @@
 import { sanityClient } from "@/lib/sanityClient";
 import { INote } from "@/types/Note";
 import { auth } from "../../firebase";
-import { v4 as uuid } from "uuid";
 
-const getNotesQuery = `*[_type == "note"]{
-      _id,  
-      title,
-      content,
-      position,
-      authorId,
-      boardId,
-      createdAt
-    }`;
 type INotesCallback = (notes: INote[]) => void;
 
 // CREATE
@@ -49,21 +39,15 @@ export async function createNoteWithUser(
 }
 
 // GET
-export function subscribeToNotes(onUpdate: INotesCallback) {
-  // Initial fetch
-  sanityClient.fetch<INote[]>(getNotesQuery).then(onUpdate);
-
-  // Subscribe to real-time updates
-  const subscription = sanityClient.listen(getNotesQuery).subscribe(() => {
-    // Re-fetch when content changes
-    console.log("noteService subscription noticed a change");
-    sanityClient.fetch<INote[]>(getNotesQuery).then((notes) => {
-      console.log("noteService just fetched notes:", notes);
-      onUpdate(notes);
-    });
+export async function getNotes() {
+  const res = await fetch('/api/notes', {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
   });
-
-  return () => subscription.unsubscribe();
+  if (!res.ok) {
+    throw new Error("Failed to get notes.");
+  }
+  return res.json();
 }
 
 // UPDATE
@@ -73,11 +57,9 @@ export async function updateNote(updatedNote: INote) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ updatedNote }),
   });
-
   if (!res.ok) {
     throw new Error("Failed to update note.");
   }
-
   return res.json();
 }
 

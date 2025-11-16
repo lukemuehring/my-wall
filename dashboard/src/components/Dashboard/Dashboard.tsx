@@ -1,17 +1,13 @@
 "use client";
-import { useServerNotes } from "@/hooks/useServerNotes";
-import { BASE_NOTE, isEqual } from "@/lib/constants";
-import { createNoteWithUser, deleteNote, updateNote } from "@/lib/noteService";
+import { BASE_NOTE, BASE_NOTE_ID } from "@/lib/constants";
+import { getNotes, updateNote } from "@/lib/noteService";
 import { INote } from "@/types/Note";
 import { useEffect, useState } from "react";
 import NoteCard from "../NoteCard/NoteCard";
 import "./Dashboard.css";
 
 export default function Dashboard() {
-  const serverNotes: INote[] | null = useServerNotes();
-
-  const [localNotes, setLocalNotes] = useState<INote[]>([]);
-  // const [deletedNoteIds, setDeletedNoteIds] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState<INote[] | null>(null);
   const [baseNote, setBaseNote] = useState<INote | null>(null);
 
   // Initialize base note
@@ -56,6 +52,11 @@ export default function Dashboard() {
     //     alert("Failed to save new note. Please try again later.");
     //   }
     // }
+  };
+
+  // Get - Next API service call
+  const handleGetNotes = async () => {
+    setNotes(await getNotes());
   };
 
   // Update - Next API service call
@@ -151,47 +152,42 @@ export default function Dashboard() {
   //   ...(baseNote ? [baseNote] : []),
   // ];
 
-  console.log("localNotes", localNotes);
-  console.log("serverNotes", serverNotes);
-  // console.log("allNotes", allNotes);
-
-  if (baseNote) {
-    const isBaseNoteInServerNotes = !!(
-      baseNote && serverNotes?.some((n) => n._id === baseNote._id)
-    );
-
-    if (!isBaseNoteInServerNotes) {
-      console.log("add basenote");
-
-      serverNotes?.push(baseNote);
-    }
+  if (!notes) {
+    handleGetNotes();
   }
+
+  const displayNotes =
+    notes && baseNote && !notes.some((n) => n._id === BASE_NOTE_ID)
+      ? [...notes, baseNote]
+      : notes;
+
+  console.log("notes", notes);
 
   return (
     <div className="dashboard-canvas">
       {/* Centered header */}
       <div className="flex justify-center py-8">
         <h2 className="text-6xl text-black">What's on your mind?</h2>
-      </div>
+      </div>    
 
       <div className="note-container">
         {/* all notes */}
 
         {(() => {
-          if (serverNotes === null) {
+          if (notes === null) {
             return (
               <div className="flex justify-center py-8">
                 <p className="text-xl text-gray-500">Loading notes...</p>
               </div>
             );
-          } else if (serverNotes.length === 0) {
+          } else if (notes.length === 0) {
             return (
               <div className="flex justify-center py-8">
                 <p className="text-xl text-gray-500">No notes found.</p>
               </div>
             );
           } else {
-            return serverNotes.map((note) => (
+            return notes.map((note) => (
               <NoteCard
                 note={note}
                 key={note._id}
