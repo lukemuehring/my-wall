@@ -66,8 +66,6 @@ export async function updateNote(updatedNote: INote) {
 
 // DELETE
 export async function deleteNote(id: string) {
-  console.log("deleting note");
-
   const res = await fetch(`/api/notes/${id}`, {
     method: "DELETE",
   });

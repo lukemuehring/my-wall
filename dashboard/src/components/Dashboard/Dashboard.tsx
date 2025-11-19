@@ -22,14 +22,12 @@ export default function Dashboard() {
   // Initialize base note
   useEffect(() => {
     if (!baseNote) {
-      console.log("initializing basenote to (100,100).");
       setBaseNote(BASE_NOTE(maxZIndex));
     }
   }, [baseNote]);
 
   // Creates the note, and replaces the base note in place with authorId
   const handleCreateNote = async (newNote: INote) => {
-    console.log("handle create in dashboard.");
     // Save to server
     try {
       const createdNote: INote = await createNoteWithUser(newNote);
@@ -41,7 +39,6 @@ export default function Dashboard() {
 
   const handleCreateBaseNote = async () => {
     let maxZ = handleBringToFront();
-    console.log("creating base note", maxZ);
     handleCreateNote(BASE_NOTE(maxZ));
   };
 
@@ -88,11 +85,9 @@ export default function Dashboard() {
     }
 
     // Remove immediately from local notes and mark as deleted
-    console.log("before delete", notes);
     setNotes((prev) => {
       return prev ? prev.filter((note) => note._id !== noteId) : null;
     });
-    console.log("after delete", notes);
 
     try {
       await deleteNote(noteId);

@@ -28,14 +28,6 @@ function NoteCard({
   const [updatedNote, setUpdatedNote] = useState(note);
   const [debouncedUpdatedNote, setDebouncedUpdatedNote] = useState(note);
 
-  // CREATE
-  // useEffect(() => {
-  //   if (!note.authorId && noteTouched) {
-  //     onCreate(note);
-  //     console.log("create for note", note, noteTouched);
-  //   }
-  // }, [noteTouched]);
-
   // #region CREATE | UPDATE
   const setField = (field: keyof INote, value: any) => {
     if (!noteTouched) {
@@ -59,10 +51,8 @@ function NoteCard({
   useEffect(() => {
     if (!isEqual(debouncedUpdatedNote, note)) {
       if (note.authorId) {
-        console.log("NoteCard UPDATE", debouncedUpdatedNote);
         onUpdate(debouncedUpdatedNote);
       } else {
-        console.log("NoteCard creating", debouncedUpdatedNote);
         onCreate(debouncedUpdatedNote);
       }
     }
@@ -71,7 +61,6 @@ function NoteCard({
 
   function handleDragStart() {
     const newMaxZIndex = onBringToFront();
-    console.log("new max zindex", newMaxZIndex);
     setField("position", {
       x: updatedNote.position.x,
       y: updatedNote.position.y,
