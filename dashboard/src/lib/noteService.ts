@@ -2,8 +2,6 @@ import { INote } from "@/types/Note";
 import { v4 } from "uuid";
 import { auth } from "../../firebase";
 
-type INotesCallback = (notes: INote[]) => void;
-
 // CREATE
 export async function createNote(note: INote): Promise<INote> {
   const res = await fetch("/api/notes", {
@@ -35,6 +33,7 @@ export async function createNoteWithUser(
     _id: newGuid,
     authorId: user.uid,
     createdAt: new Date().toISOString(), // Use ISO string for consistency
+    updatedAt: new Date().toISOString(),
   };
 
   return createNote(noteWithUser);
@@ -46,7 +45,7 @@ export async function getNotes() {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
-  if (!res.ok) {
+if (!res.ok) {
     throw new Error("Failed to get notes.");
   }
   return res.json();
@@ -66,10 +65,10 @@ export async function updateNote(updatedNote: INote) {
 }
 
 // DELETE
-export async function deleteNote(_id: string) {
+export async function deleteNote(id: string) {
   console.log("deleting note");
 
-  const res = await fetch(`/api/notes/${_id}`, {
+  const res = await fetch(`/api/notes/${id}`, {
     method: "DELETE",
   });
 
@@ -78,4 +77,20 @@ export async function deleteNote(_id: string) {
   }
 
   return res.json();
+}
+
+// SUMMARIZE
+export async function summarizeNote(note: INote): Promise<string> {
+  const res = await fetch(`/api/notes/${note._id}/summarize`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: note._id, content: note.content }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to summarize note.");
+  }
+
+  const data = await res.json();
+  return data.summary;
 }

@@ -1,21 +1,19 @@
 import { INote } from "@/types/Note";
-import { IPosition } from "@/types/Position";
 
-export const BASE_NOTE_ID: string = 'base_note';
+export const BASE_NOTE_ID: string = "base_note";
 
 // A base note with no author Id
-export const BASE_NOTE: (position: IPosition) => INote = (
-  position: IPosition
-) => {
+export const BASE_NOTE: (z: number) => INote = (z) => {
   return {
     _id: BASE_NOTE_ID,
     authorId: null,
     title: "BASE NOTE",
     content: "",
-    position: position,
+    position: { x: 100, y: 100, z: z },
     boardId: "1",
-    createdAt: "", 
+    createdAt: "",
   } as INote;
 };
 
-export const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
+export const isEqual = (a: any, b: any) =>
+  JSON.stringify(a) === JSON.stringify(b);

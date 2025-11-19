@@ -8,6 +8,6 @@ export interface INote {
   position: IPosition;
   boardId: string;
   createdAt: string; // ISO datetime string
-
-  _createdAt?: string; // is this needed?  Sanity system field for creation datetime, optional
+  updatedAt: string; // ISO datetime string
+  summary?: string;
 }

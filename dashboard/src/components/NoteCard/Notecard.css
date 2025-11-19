@@ -17,3 +17,9 @@
     padding: 4px;
   }
 }
+
+.ai-buttons {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}

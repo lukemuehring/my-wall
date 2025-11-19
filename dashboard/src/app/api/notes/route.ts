@@ -35,7 +35,9 @@ const getNotesQuery = `*[_type == "note"]{
       position,
       authorId,
       boardId,
-      createdAt
+      createdAt,
+      updatedAt,
+      summary
     }`;
 
 // READ

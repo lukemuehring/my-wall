@@ -17,7 +17,10 @@ export async function PUT(
       );
     }
 
-    console.log("Next API: UpdateNote - calling Sanity with payload", updatedNote);
+    console.log(
+      "Next API: UpdateNote - calling Sanity with payload",
+      updatedNote
+    );
     const result: INote = await sanityClient
       .patch(updatedNote._id)
       .set(updatedNote)

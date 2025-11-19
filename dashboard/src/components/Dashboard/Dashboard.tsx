@@ -1,62 +1,73 @@
 "use client";
-import { BASE_NOTE, BASE_NOTE_ID } from "@/lib/constants";
-import { getNotes, updateNote } from "@/lib/noteService";
+import { BASE_NOTE } from "@/lib/constants";
+import {
+  createNoteWithUser,
+  deleteNote,
+  getNotes,
+  summarizeNote,
+  updateNote,
+} from "@/lib/noteService";
 import { INote } from "@/types/Note";
-import { useEffect, useState } from "react";
+import { Button } from "@adobe/react-spectrum";
+import { useEffect, useRef, useState } from "react";
 import NoteCard from "../NoteCard/NoteCard";
 import "./Dashboard.css";
 
 export default function Dashboard() {
   const [notes, setNotes] = useState<INote[] | null>(null);
+  const [maxZIndex, setMaxZIndex] = useState<number>(0);
   const [baseNote, setBaseNote] = useState<INote | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Initialize base note
   useEffect(() => {
     if (!baseNote) {
       console.log("initializing basenote to (100,100).");
-      setBaseNote(BASE_NOTE({ x: 100, y: 100, z: 1 }));
+      setBaseNote(BASE_NOTE(maxZIndex));
     }
   }, [baseNote]);
 
   // Creates the note, and replaces the base note in place with authorId
   const handleCreateNote = async (newNote: INote) => {
     console.log("handle create in dashboard.");
-    // // Save to server
-    // try {
-    //   // optimistic add to local notes
-    //   setLocalNotes((prev) => [...prev, newNote]);
+    // Save to server
+    try {
+      const createdNote: INote = await createNoteWithUser(newNote);
+      handleGetNotes();
+    } catch {
+      console.log("create didnt work lol");
+    }
+  };
 
-    //   // Persist
-    //   const createdNote: INote = await createNoteWithUser(newNote);
-
-    //   // Remove the old note and add the new one with server-generated ID
-    //   setLocalNotes((prev) => {
-    //     // Remove the original note (with old ID)
-    //     const filtered = prev.filter((n) => n._id !== newNote._id);
-    //     // Add the new note with server-generated ID
-    //     return [...filtered, createdNote];
-    //   });
-    // } catch (err) {
-    //   console.error("Failed to save new note:", err);
-
-    //   // Remove the optimistic note on failure
-    //   setLocalNotes((prev) => prev.filter((n) => n._id !== newNote._id));
-
-    //   // Retry once after one second delay
-    //   try {
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    //     const retryNote = await createNoteWithUser(newNote);
-    //     setLocalNotes((prev) => [...prev, retryNote]);
-    //   } catch (retryErr) {
-    //     console.error("Retry failed to save new note:", retryErr);
-    //     alert("Failed to save new note. Please try again later.");
-    //   }
-    // }
+  const handleCreateBaseNote = async () => {
+    let maxZ = handleBringToFront();
+    console.log("creating base note", maxZ);
+    handleCreateNote(BASE_NOTE(maxZ));
   };
 
   // Get - Next API service call
   const handleGetNotes = async () => {
-    setNotes(await getNotes());
+    // Sort notes by last update ascending for z-index.
+    let notes: INote[] = await getNotes();
+    notes = notes
+      .filter((n: INote) => !n.updatedAt)
+      .concat(
+        notes
+          .filter((n: INote) => n.updatedAt)
+          .sort(
+            (a: INote, b: INote) =>
+              new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+          )
+      );
+    notes = notes.map((note: INote, idx: number) => ({
+      ...note,
+      position: {
+        ...note.position,
+        z: idx + 1,
+      },
+    }));
+    setMaxZIndex(notes.length + 1);
+    setNotes(notes);
   };
 
   // Update - Next API service call
@@ -68,111 +79,107 @@ export default function Dashboard() {
   // Delete
   const handleDeleteNote = async (noteId: string) => {
     console.log("handleDelete in Dashboard.");
-    // const noteToDelete = localNotes.find((note) => note._id === noteId);
+    if (!notes) {
+      return;
+    }
+    const noteToDelete = notes.find((note) => note._id === noteId);
+    if (!noteToDelete) {
+      return;
+    }
 
-    // // Remove immediately from localNotes and mark as deleted
-    // setLocalNotes((prev) => prev.filter((note) => note._id !== noteId));
-    // setDeletedNoteIds((prev) => new Set(prev).add(noteId));
+    // Remove immediately from local notes and mark as deleted
+    console.log("before delete", notes);
+    setNotes((prev) => {
+      return prev ? prev.filter((note) => note._id !== noteId) : null;
+    });
+    console.log("after delete", notes);
 
-    // try {
-    //   await deleteNote(noteId);
-    // } catch (err) {
-    //   console.error("Failed to delete note:", err);
-    //   // Revert local delete
-    //   if (noteToDelete) {
-    //     setLocalNotes((prev) => [...prev, noteToDelete]);
-    //     setDeletedNoteIds((prev) => {
-    //       const newSet = new Set(prev);
-    //       newSet.delete(noteId);
-    //       return newSet;
-    //     });
-    //   }
-    // }
+    try {
+      await deleteNote(noteId);
+    } catch (err) {
+      console.error("Failed to delete note:", err);
+      // Revert local delete
+      setNotes((prev) => (prev ? [...prev, noteToDelete] : null));
+    }
   };
 
-  // // Clean up deleted note IDs when server confirms deletion
-  // useEffect(() => {
-  // console.log("setting deleted note ids useEffect");
-  // setDeletedNoteIds((prev) => {
-  //   const newSet = new Set(prev);
-  //   // Remove IDs that are no longer in serverNotes (confirmed deleted)
-  //   prev.forEach((deletedId) => {
-  //     if (!serverNotes.some((note) => note._id === deletedId)) {
-  //       newSet.delete(deletedId);
-  //     }
-  //   });
-  //   return newSet;
-  // });
-  // }, [serverNotes]);
-
-  // // Clean up localNotes when serverNotes are updated (for updates)
-  // useEffect(() => {
-  // console.log("clean up local notes useEffect");
-  // setLocalNotes((prev) => {
-  //   // Remove any local notes that now exist in serverNotes
-  //   // But only if they have the same content (indicating the update was successful)
-  //   return prev.filter((local) => {
-  //     const serverNote = serverNotes.find(
-  //       (server) => server._id === local._id
-  //     );
-  //     if (!serverNote) return true; // Keep if not found in server
-
-  //     // Remove if server has the same or newer content
-  //     // This prevents duplicates while preserving optimistic updates
-  //     return false;
-  //   });
-  // });
-  // }, [serverNotes]);
-
-  /**
-   * The Flow:
-   * Delete clicked → Note disappears immediately (optimistic)
-   * Server processes delete → May take time
-   * Subscription fires → Might return stale data initially
-   * Stale data filtered out → Note stays hidden
-   * Server confirms deletion → Note removed from serverNotes
-   * Cleanup effect runs → deletedNoteIds cleaned up
-  console.log("localNotes", localNotes);
-  console.log("serverNotes", serverNotes);
-  console.log("deletedNoteIds", deletedNoteIds);
-   *
-   * 
-   */
-
-  // Filter out duplicates and deleted notes
-  // Priority: serverNotes > localNotes (server is source of truth)
-  // const allNotes = [
-  //   ...serverNotes.filter((note) => note._id && !deletedNoteIds.has(note._id)),
-  //   ...localNotes.filter(
-  //     (local) =>
-  //       local._id &&
-  //       !serverNotes.some((server) => server._id === local._id) &&
-  //       !deletedNoteIds.has(local._id)
-  //   ),
-  //   ...(baseNote ? [baseNote] : []),
-  // ];
-
+  // Initial GET
   if (!notes) {
     handleGetNotes();
   }
 
-  const displayNotes =
-    notes && baseNote && !notes.some((n) => n._id === BASE_NOTE_ID)
-      ? [...notes, baseNote]
-      : notes;
+  // Summarize note
+  const handleSummarize = async (note: INote) => {
+    try {
+      const summary = await summarizeNote(note);
+      const updatedNote = { ...note, summary };
+      console.log("summary", summary);
+      await handleUpdateNote(updatedNote); //todo - updates saved on server wont be reflected in UI, it's not two ways.
+    } catch (error) {
+      console.error("Failed to summarize note:", error);
+    }
+  };
 
-  console.log("notes", notes);
+  function clearBaseNoteFields() {
+    if (baseNote) {
+      baseNote.title = "";
+      baseNote.content = "";
+    }
+  }
+
+  // Handler to bring a note to the front (increment maxZIndex and return new value)
+  function handleBringToFront() {
+    let newZ: number = 0;
+    setMaxZIndex((prev) => {
+      newZ = prev + 1;
+      return newZ;
+    });
+    return newZ;
+  }
 
   return (
     <div className="dashboard-canvas">
       {/* Centered header */}
-      <div className="flex justify-center py-8">
-        <h2 className="text-6xl text-black">What's on your mind?</h2>
-      </div>    
+      <div className="flex flex-col items-center justify-center py-8">
+        <h2 className="text-6xl text-black mb-4">What's on your mind?</h2>
+        <div>
+          <Button
+            variant="secondary"
+            style="outline"
+            onPress={() => handleCreateBaseNote()}
+          >
+            <span className="font-normal">New Note</span>
+          </Button>
+        </div>
+      </div>
 
-      <div className="note-container">
+      {/* Debug: show note titles and first 50 chars of content */}
+      <pre
+        style={{
+          background: "#f5f5f5",
+          padding: "1em",
+          marginTop: "2em",
+          borderRadius: "6px",
+          fontSize: "0.9em",
+          overflowX: "auto",
+        }}
+      >
+        {Array.isArray(notes)
+          ? notes
+              .map(
+                (n, i) =>
+                  `${i + 1}. ${n.title || "(no title)"}\n   ${
+                    n.content ? n.content.slice(0, 50) : ""
+                  }${n.content && n.content.length > 50 ? "..." : ""}
+              ${new Date(n.updatedAt).toLocaleString()}
+              z-index: ${n.position.z}\n`
+              )
+              .join("")
+          : "No notes."}
+      </pre>
+
+      <div className="note-container" ref={containerRef}>
         {/* all notes */}
-
         {(() => {
           if (notes === null) {
             return (
@@ -184,6 +191,18 @@ export default function Dashboard() {
             return (
               <div className="flex justify-center py-8">
                 <p className="text-xl text-gray-500">No notes found.</p>
+                {baseNote && (
+                  <NoteCard
+                    note={baseNote}
+                    key={baseNote._id}
+                    containerRef={containerRef}
+                    onBringToFront={handleBringToFront}
+                    onCreate={(note: INote) => handleCreateNote(note)}
+                    onUpdate={(note: INote) => handleUpdateNote(note)}
+                    onDelete={() => clearBaseNoteFields()}
+                    onSummarize={(note: INote) => handleSummarize(note)}
+                  ></NoteCard>
+                )}
               </div>
             );
           } else {
@@ -191,13 +210,12 @@ export default function Dashboard() {
               <NoteCard
                 note={note}
                 key={note._id}
-                onCreate={(noteToCreate: INote) =>
-                  handleCreateNote(noteToCreate)
-                }
-                onUpdate={(noteToUpdate: INote) =>
-                  handleUpdateNote(noteToUpdate)
-                }
+                containerRef={containerRef}
+                onBringToFront={handleBringToFront}
+                onCreate={(note: INote) => handleCreateNote(note)}
+                onUpdate={(note: INote) => handleUpdateNote(note)}
                 onDelete={() => handleDeleteNote(note._id)}
+                onSummarize={(note: INote) => handleSummarize(note)}
               ></NoteCard>
             ));
           }

@@ -53,5 +53,15 @@ export const note = defineType({
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
     },
+    {
+      name: 'updatedAt',
+      title: 'Updated At',
+      type: 'datetime',
+    },
+    {
+      name: 'summary',
+      title: 'Summary',
+      type: 'text',
+    },
   ],
 })
