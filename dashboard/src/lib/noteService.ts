@@ -1,5 +1,5 @@
-import { sanityClient } from "@/lib/sanityClient";
 import { INote } from "@/types/Note";
+import { v4 } from "uuid";
 import { auth } from "../../firebase";
 
 type INotesCallback = (notes: INote[]) => void;
@@ -29,8 +29,10 @@ export async function createNoteWithUser(
     throw new Error("User must be authenticated to create a note");
   }
 
+  const newGuid = v4();
   const noteWithUser: INote = {
     ...noteData,
+    _id: newGuid,
     authorId: user.uid,
     createdAt: new Date().toISOString(), // Use ISO string for consistency
   };
@@ -40,7 +42,7 @@ export async function createNoteWithUser(
 
 // GET
 export async function getNotes() {
-  const res = await fetch('/api/notes', {
+  const res = await fetch("/api/notes", {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });

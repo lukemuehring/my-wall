@@ -1,5 +1,19 @@
 .journal-textarea textarea {
   font-size: larger;
   font-family: inherit;
-  border: 2px black solid;
+  border: 1px solid rgba(0,0,0,.05);
+  /* background: yellow; */
+}
+
+.journal-header {
+  width: 100% !important;
+  margin-bottom: 16px;
+
+  textarea {
+    /* background: magenta; */
+    font-size: xx-large;
+    font-family: inherit;
+    border: none;
+    padding: 4px;
+  }
 }
