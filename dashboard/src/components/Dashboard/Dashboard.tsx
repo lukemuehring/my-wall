@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [notes, setNotes] = useState<INote[] | null>(null);
   const [maxZIndex, setMaxZIndex] = useState<number>(0);
   const [baseNote, setBaseNote] = useState<INote | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Initialize base note
@@ -28,12 +29,14 @@ export default function Dashboard() {
 
   // Creates the note, and replaces the base note in place with authorId
   const handleCreateNote = async (newNote: INote) => {
-    // Save to server
+    setLoading(true);
     try {
       const createdNote: INote = await createNoteWithUser(newNote);
-      handleGetNotes();
-    } catch {
-      console.log("create didnt work lol");
+      await handleGetNotes();
+    } catch (err) {
+      console.error("Dashboard: unable to create note.", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,38 +47,51 @@ export default function Dashboard() {
 
   // Get - Next API service call
   const handleGetNotes = async () => {
-    // Sort notes by last update ascending for z-index.
-    let notes: INote[] = await getNotes();
-    notes = notes
-      .filter((n: INote) => !n.updatedAt)
-      .concat(
-        notes
-          .filter((n: INote) => n.updatedAt)
-          .sort(
-            (a: INote, b: INote) =>
-              new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
-          )
-      );
-    notes = notes.map((note: INote, idx: number) => ({
-      ...note,
-      position: {
-        ...note.position,
-        z: idx + 1,
-      },
-    }));
-    setMaxZIndex(notes.length + 1);
-    setNotes(notes);
+    console.log("Dashboard: fetching notes...");
+    setLoading(true);
+    try {
+      let notes: INote[] = await getNotes();
+      notes = notes
+        .filter((n: INote) => !n.updatedAt)
+        .concat(
+          notes
+            .filter((n: INote) => n.updatedAt)
+            .sort(
+              (a: INote, b: INote) =>
+                new Date(a.updatedAt).getTime() -
+                new Date(b.updatedAt).getTime()
+            )
+        );
+      notes = notes.map((note: INote, idx: number) => ({
+        ...note,
+        position: {
+          ...note.position,
+          z: idx + 1,
+        },
+      }));
+      setMaxZIndex(notes.length + 1);
+      setNotes(notes);
+    } catch (err) {
+      console.error("Dashboard: unable to get notes.", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Update - Next API service call
   const handleUpdateNote = async (updatedNote: INote) => {
-    console.log("updating from dashboard");
-    updateNote(updatedNote);
+    setLoading(true);
+    try {
+      await updateNote(updatedNote);
+    } catch (err) {
+      console.error("Dashboard: unable to update note.", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Delete
   const handleDeleteNote = async (noteId: string) => {
-    console.log("handleDelete in Dashboard.");
     if (!notes) {
       return;
     }
@@ -89,22 +105,26 @@ export default function Dashboard() {
       return prev ? prev.filter((note) => note._id !== noteId) : null;
     });
 
+    setLoading(true);
     try {
       await deleteNote(noteId);
     } catch (err) {
-      console.error("Failed to delete note:", err);
+      console.error("Dashboard: unable to delete note", err);
       // Revert local delete
       setNotes((prev) => (prev ? [...prev, noteToDelete] : null));
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Initial GET
-  if (!notes) {
+  // Initial GET - fetch notes only once on mount
+  useEffect(() => {
     handleGetNotes();
-  }
+  }, []);
 
   // Summarize note
   const handleSummarize = async (note: INote) => {
+    setLoading(true);
     try {
       const summary = await summarizeNote(note);
       const updatedNote = { ...note, summary };
@@ -112,6 +132,8 @@ export default function Dashboard() {
       await handleUpdateNote(updatedNote); //todo - updates saved on server wont be reflected in UI, it's not two ways.
     } catch (error) {
       console.error("Failed to summarize note:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -133,7 +155,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="dashboard-canvas">
+    <div className="dashboard-canvas" style={{ position: "relative" }}>
       {/* Centered header */}
       <div className="flex flex-col items-center justify-center py-8">
         <h2 className="text-6xl text-black mb-4">What's on your mind?</h2>
@@ -147,7 +169,7 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
-
+      <div className={`dashboard-loading-bar${loading ? " active" : ""}${loading ? " running" : " paused"}`} />
       <div className="note-container" ref={containerRef}>
         {/* all notes */}
         {(() => {
