@@ -149,34 +149,6 @@ export default function Dashboard() {
       </div>
 
       <div className="note-container" ref={containerRef}>
-        {/* Debug: show note titles and first 50 chars of content
-      <pre
-        style={{
-          background: "#f5f5f5",
-          padding: "1em",
-          marginTop: "2em",
-          borderRadius: "6px",
-          fontSize: "0.9em",
-          overflowX: "auto",
-          position: "absolute",
-          top: 0,
-          left: 0,
-          zIndex: 0,
-        }}
-      >
-        {Array.isArray(notes)
-          ? notes
-              .map(
-                (n, i) =>
-                  `${i + 1}. ${n.title || "(no title)"}\n   ${
-                    n.content ? n.content.slice(0, 50) : ""
-                  }${n.content && n.content.length > 50 ? "..." : ""}
-              ${new Date(n.updatedAt).toLocaleString()}
-              z-index: ${n.position.z}\n`
-              )
-              .join("")
-          : "No notes."}
-      </pre> */}
         {/* all notes */}
         {(() => {
           if (notes === null) {

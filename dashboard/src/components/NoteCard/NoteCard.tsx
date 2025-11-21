@@ -65,8 +65,6 @@ function NoteCard({
   ) {
     // Bring note to front
     const newMaxZIndex = onBringToFront();
-    // debug 
-    //console.log("Bringing to front, new z-index:", updatedNote.position);
     setField("position", {
       x: updatedNote.position.x,
       y: updatedNote.position.y,
@@ -90,28 +88,6 @@ function NoteCard({
       offsetX = noteContainer.left;
       offsetY = noteContainer.top;
     }
-    // debug 
-    // console.log("info.point:", info.point);
-    // console.log("container offset:", offsetX, offsetY);
-    // console.log(
-    //   "pointer offset",
-    //   pointerOffset.current.x,
-    //   pointerOffset.current.y
-    // );
-
-    // console.log("-=-=-=-=-=-=-");
-    // console.log("Final position:", {
-    //   x: info.point.x - offsetX - pointerOffset.current.x,
-    //   y: info.point.y - offsetY - pointerOffset.current.y,
-    // });
-
-    // info.point - absolute position of pointer in viewport
-    // offset - note container position in viewport in x and y
-    // pointer offset - where we clicked in the note card, relative to top-left
-
-    // the framer motion translate is always relative to the original position
-    // my positon is the top left corner, relative to the note container.
-
     setField("position", {
       x: info.point.x - offsetX - pointerOffset.current.x,
       y: info.point.y - offsetY - pointerOffset.current.y,
@@ -140,14 +116,6 @@ function NoteCard({
       }}
       className="flex flex-col w-fit text-black cursor-move rounded p-8 shadow bg-white border-gray-300 border-[1px]"
     >
-      {/* DEBUG*/}
-      {/* <div className="absolute left-2 top-2 text-xs bg-gray-100 px-2 py-1 rounded shadow z-10">
-        <span>
-          left: {updatedNote.position.x}, top: {updatedNote.position.y}
-        </span>
-        <br />
-      </div> */}
-
       <div className="absolute top-2 right-2">
         <ActionButton
           aria-label="Delete Note"
@@ -156,16 +124,6 @@ function NoteCard({
         >
           <Delete />
         </ActionButton>
-      </div>
-      {/* METADATA */}
-      {note._id}
-      <div className="mt-4">
-        <div>Updated Note position:</div>({updatedNote.position.x},{" "}
-        {updatedNote.position.y}, {updatedNote.position.z})
-      </div>
-      <div className="mt-4">
-        <div> Note position:</div>({note.position.x}, {note.position.y},{" "}
-        {note.position.z})
       </div>
 
       {/* TITLE */}
