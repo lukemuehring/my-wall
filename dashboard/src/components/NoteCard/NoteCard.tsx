@@ -4,7 +4,7 @@ import { INote } from "@/types/Note";
 import { ActionButton, Button, TextArea } from "@adobe/react-spectrum";
 import Delete from "@spectrum-icons/workflow/Delete";
 import { motion } from "framer-motion";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import "./Notecard.css";
 
 function NoteCard({
@@ -59,27 +59,62 @@ function NoteCard({
   }, [debouncedUpdatedNote]);
   // #endregion UPDATE
 
-  function handleDragStart() {
+  const pointerOffset = useRef({ x: 0, y: 0 });
+  function handleDragStart(
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) {
+    // Bring note to front
     const newMaxZIndex = onBringToFront();
+    // debug 
+    //console.log("Bringing to front, new z-index:", updatedNote.position);
     setField("position", {
       x: updatedNote.position.x,
       y: updatedNote.position.y,
       z: newMaxZIndex,
     });
+
+    // Calculate pointer offset within the note card
+    const cardRect = event.currentTarget.getBoundingClientRect();
+    pointerOffset.current = {
+      x: event.clientX - cardRect.left,
+      y: event.clientY - cardRect.top,
+    };
   }
 
-  // update the position relative to container div
+  // update the position relative to container div and pointer offset
   function handleDragEnd(info: { point: { x: number; y: number } }) {
     let offsetX = 0;
     let offsetY = 0;
     if (containerRef && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      offsetX = rect.left;
-      offsetY = rect.top;
+      const noteContainer = containerRef.current.getBoundingClientRect();
+      offsetX = noteContainer.left;
+      offsetY = noteContainer.top;
     }
+    // debug 
+    // console.log("info.point:", info.point);
+    // console.log("container offset:", offsetX, offsetY);
+    // console.log(
+    //   "pointer offset",
+    //   pointerOffset.current.x,
+    //   pointerOffset.current.y
+    // );
+
+    // console.log("-=-=-=-=-=-=-");
+    // console.log("Final position:", {
+    //   x: info.point.x - offsetX - pointerOffset.current.x,
+    //   y: info.point.y - offsetY - pointerOffset.current.y,
+    // });
+
+    // info.point - absolute position of pointer in viewport
+    // offset - note container position in viewport in x and y
+    // pointer offset - where we clicked in the note card, relative to top-left
+
+    // the framer motion translate is always relative to the original position
+    // my positon is the top left corner, relative to the note container.
+
     setField("position", {
-      x: info.point.x - offsetX,
-      y: info.point.y - offsetY,
+      x: info.point.x - offsetX - pointerOffset.current.x,
+      y: info.point.y - offsetY - pointerOffset.current.y,
       z: updatedNote.position.z,
     });
   }
@@ -93,16 +128,26 @@ function NoteCard({
         boxShadow: "0px 10px 20px rgba(0,0,0,0.2)",
       }}
       dragMomentum={false}
-      onMouseDown={() => handleDragStart()}
+      onMouseDown={(e) => handleDragStart(e)} // event name may need to be updated for mobile
       onDragEnd={(_, info) => handleDragEnd(info)}
+      initial={{
+        x: updatedNote.position.x,
+        y: updatedNote.position.y,
+      }}
       style={{
         position: "absolute",
-        left: updatedNote.position.x,
-        top: updatedNote.position.y,
         zIndex: updatedNote.position.z,
       }}
-      className="relative flex flex-col w-fit text-black cursor-move rounded p-8 shadow bg-white border-gray-300 border-[1px]"
+      className="flex flex-col w-fit text-black cursor-move rounded p-8 shadow bg-white border-gray-300 border-[1px]"
     >
+      {/* DEBUG*/}
+      {/* <div className="absolute left-2 top-2 text-xs bg-gray-100 px-2 py-1 rounded shadow z-10">
+        <span>
+          left: {updatedNote.position.x}, top: {updatedNote.position.y}
+        </span>
+        <br />
+      </div> */}
+
       <div className="absolute top-2 right-2">
         <ActionButton
           aria-label="Delete Note"

@@ -148,7 +148,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Debug: show note titles and first 50 chars of content */}
+      <div className="note-container" ref={containerRef}>
+        {/* Debug: show note titles and first 50 chars of content
       <pre
         style={{
           background: "#f5f5f5",
@@ -157,6 +158,10 @@ export default function Dashboard() {
           borderRadius: "6px",
           fontSize: "0.9em",
           overflowX: "auto",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: 0,
         }}
       >
         {Array.isArray(notes)
@@ -171,9 +176,7 @@ export default function Dashboard() {
               )
               .join("")
           : "No notes."}
-      </pre>
-
-      <div className="note-container" ref={containerRef}>
+      </pre> */}
         {/* all notes */}
         {(() => {
           if (notes === null) {
